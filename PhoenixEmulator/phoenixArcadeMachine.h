@@ -1,7 +1,7 @@
 #pragma once
-#include "cpu.h"
+#include "i8080.h"
 
 typedef struct phoenixArcadeMachine
 {
-		
+
 } phoenixArcadeMachine;
