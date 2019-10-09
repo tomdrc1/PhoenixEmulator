@@ -1,4 +1,4 @@
-#include "cpu.h"
+#include "i8080.h"
 
 byte pairtyCheck(byte num, byte size)
 {

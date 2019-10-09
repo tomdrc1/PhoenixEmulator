@@ -123,11 +123,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="cpu.c" />
+    <ClCompile Include="i8080.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="phoenixArcadeMachine.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cpu.h" />
+    <ClInclude Include="i8080.h" />
+    <ClInclude Include="phoenixArcadeMachine.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
