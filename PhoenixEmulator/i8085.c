@@ -1048,6 +1048,11 @@ void emulate8085Op(i8085* state)
 			retConditional(state, state->cc.cy);
 			break;
 		case 0xD9:
+			{
+				unsigned short de = (state->d << 8) | state->e;
+				writeToMemory(state, de, state->l);
+				writeToMemory(state, de + 1, state->h);
+			}
 			break;
 		case 0xDA:
 			jmpConditional(state, state->cc.cy, (instruction[2] << 8) | instruction[1]);
@@ -1378,15 +1383,10 @@ void jmpConditional(i8085* state, byte Conditional, unsigned short adr)
 
 void writeToMemory(i8085* state, unsigned short adr, byte value)
 {
-	if (adr < 0x2000)
+	if (adr < 0x4000)
 	{
 		printf("Writing ROM not allowed %x\n", adr);
 		return;
-	}
-	
-	if (adr >= 0x4000 && adr < 0x6000) 
-	{ 
-		adr -= 0x2000;
 	}
 	
 	state->memory[adr] = value;
