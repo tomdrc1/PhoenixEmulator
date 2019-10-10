@@ -1,4 +1,6 @@
 #pragma once
+#pragma warning(disable:4996)
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "i8080.h"
@@ -25,6 +27,12 @@ void initMachine(phoenixArcadeMachine* machine);
 	input: A pointer to the State8080 struct
 */
 void initCPU(State8080* i8080);
+
+/*
+	 Will read a file to the memory with the offset
+	 Input: A pointer to the State8080 struct, the file name, and the offset
+*/
+void readFileToMemory(State8080* i8080, char* fileName, unsigned short offset);
 
 /*
 	Will free all the allocation we made in the `init` function

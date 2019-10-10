@@ -2,7 +2,18 @@
 
 void startEmulation(phoenixArcadeMachine* machine)
 {
+	byte exit = 0;
+
 	initMachine(machine);
+	
+	readFileToMemory(machine->i8080, "Phoenix.rom", 0);
+
+	while (!exit)
+	{
+		emulate8080Op(machine->i8080);
+	}
+
+	freeMachine(machine);
 }
 
 void initMachine(phoenixArcadeMachine* machine)
@@ -38,6 +49,25 @@ void initCPU(State8080* i8080)
 
 	i8080->int_enable = 0;
 	i8080->cycles = 0;
+}
+
+void readFileToMemory(State8080* i8080, char* fileName, unsigned short offset)
+{
+	FILE* f = fopen(fileName, "rb");
+
+	if (!f)
+	{
+		printf("Error can't open file %s\n", fileName);
+		exit(1);
+	}
+
+	fseek(f, 0, SEEK_END);
+	int fileSize = ftell(f);
+	fseek(f, 0, SEEK_SET);
+
+	byte* buffer = &i8080->memory[offset];
+	fread(buffer, fileSize, 1, f);
+	fclose(f);
 }
 
 void freeMachine(phoenixArcadeMachine* machine)

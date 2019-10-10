@@ -50,7 +50,7 @@ static const byte OPCODES_CYCLES[] = {
 };
 
 byte pairtyCheck(byte num, byte size);
-byte emulate8080Op(State8080* state);
+void emulate8080Op(State8080* state);
 void add(State8080* state, byte r);
 void adc(State8080* state, byte r);
 void sub(State8080* state, byte r);

@@ -18,7 +18,7 @@ byte pairtyCheck(byte num, byte size)
 	return (count % 2 == 0);
 }
 
-byte emulate8080Op(State8080* state)
+void emulate8080Op(State8080* state)
 {
 	byte* instruction = &state->memory[state->pc];
 
@@ -1191,8 +1191,6 @@ byte emulate8080Op(State8080* state)
 			state->pc = 0x38;
 			break;
 	}
-
-	return 0;
 }
 
 /*
