@@ -10,7 +10,7 @@ void startEmulation(phoenixArcadeMachine* machine)
 
 	while (!exit)
 	{
-		emulate8085Op(machine->i8085);
+
 	}
 
 	freeMachine(machine);

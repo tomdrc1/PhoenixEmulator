@@ -7,6 +7,8 @@
 
 #define MEMORY_SIZE 0x10000 //64K
 
+#define CYCLES_PER_FRAME 5500000 / 60
+
 typedef struct phoenixArcadeMachine
 {
 	i8085* i8085;
