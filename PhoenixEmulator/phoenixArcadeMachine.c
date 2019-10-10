@@ -6,11 +6,11 @@ void startEmulation(phoenixArcadeMachine* machine)
 
 	initMachine(machine);
 	
-	readFileToMemory(machine->i8080, "Phoenix.rom", 0);
+	readFileToMemory(machine->i8085, "Phoenix.rom", 0);
 
 	while (!exit)
 	{
-		emulate8080Op(machine->i8080);
+		emulate8085Op(machine->i8085);
 	}
 
 	freeMachine(machine);
@@ -18,40 +18,40 @@ void startEmulation(phoenixArcadeMachine* machine)
 
 void initMachine(phoenixArcadeMachine* machine)
 {
-	machine->i8080 = (State8080*)malloc(sizeof(State8080));
-	initCPU(machine->i8080);
+	machine->i8085 = (i8085*)malloc(sizeof(i8085));
+	initCPU(machine->i8085);
 }
 
-void initCPU(State8080* i8080)
+void initCPU(i8085* i8085)
 {
-	i8080->a = 0;
-	i8080->b = 0;
-	i8080->c = 0;
-	i8080->d = 0;
-	i8080->e = 0;
-	i8080->h = 0;
-	i8080->l = 0;
+	i8085->a = 0;
+	i8085->b = 0;
+	i8085->c = 0;
+	i8085->d = 0;
+	i8085->e = 0;
+	i8085->h = 0;
+	i8085->l = 0;
 
-	i8080->pc = 0;
-	i8080->sp = 0;
+	i8085->pc = 0;
+	i8085->sp = 0;
 
-	i8080->memory = (byte*)malloc(MEMORY_SIZE * sizeof(byte));
-	memset(i8080->memory, NULL, MEMORY_SIZE * sizeof(byte));
+	i8085->memory = (byte*)malloc(MEMORY_SIZE * sizeof(byte));
+	memset(i8085->memory, NULL, MEMORY_SIZE * sizeof(byte));
 
-	i8080->cc.z = 0;
-	i8080->cc.s = 0;
-	i8080->cc.p = 0;
-	i8080->cc.cy = 0;
-	i8080->cc.ac = 0;
-	i8080->cc.pad1 = 1;
-	i8080->cc.pad2 = 0;
-	i8080->cc.pad3 = 0;
+	i8085->cc.z = 0;
+	i8085->cc.s = 0;
+	i8085->cc.p = 0;
+	i8085->cc.cy = 0;
+	i8085->cc.ac = 0;
+	i8085->cc.pad1 = 1;
+	i8085->cc.pad2 = 0;
+	i8085->cc.pad3 = 0;
 
-	i8080->int_enable = 0;
-	i8080->cycles = 0;
+	i8085->int_enable = 0;
+	i8085->cycles = 0;
 }
 
-void readFileToMemory(State8080* i8080, char* fileName, unsigned short offset)
+void readFileToMemory(i8085* i8085, char* fileName, unsigned short offset)
 {
 	FILE* f = fopen(fileName, "rb");
 
@@ -65,13 +65,13 @@ void readFileToMemory(State8080* i8080, char* fileName, unsigned short offset)
 	int fileSize = ftell(f);
 	fseek(f, 0, SEEK_SET);
 
-	byte* buffer = &i8080->memory[offset];
+	byte* buffer = &i8085->memory[offset];
 	fread(buffer, fileSize, 1, f);
 	fclose(f);
 }
 
 void freeMachine(phoenixArcadeMachine* machine)
 {
-	free(machine->i8080->memory);
-	free(machine->i8080);
+	free(machine->i8085->memory);
+	free(machine->i8085);
 }

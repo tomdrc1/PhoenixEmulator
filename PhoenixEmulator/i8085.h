@@ -12,7 +12,7 @@ typedef struct ConditionCodes {
 	byte s : 1;
 } ConditionCodes;
 
-typedef struct State8080 {
+typedef struct i8085 {
 	byte a;
 	byte b;
 	byte c;
@@ -26,7 +26,7 @@ typedef struct State8080 {
 	ConditionCodes cc;
 	byte int_enable;
 	unsigned int cycles;
-} State8080;
+} i8085;
 
 
 static const byte OPCODES_CYCLES[] = {
@@ -50,19 +50,19 @@ static const byte OPCODES_CYCLES[] = {
 };
 
 byte pairtyCheck(byte num, byte size);
-void emulate8080Op(State8080* state);
-void add(State8080* state, byte r);
-void adc(State8080* state, byte r);
-void sub(State8080* state, byte r);
-void sbb(State8080* state, byte r);
-void ana(State8080* state, byte r);
-void xra(State8080* state, byte r);
-void ora(State8080* state, byte r);
-void cmp(State8080* state, byte r);
-void push(State8080* state, byte high, byte low);
-void pop(State8080* state, byte* high, byte* low);
-void retConditional(State8080* state, byte Conditional);
-void callConditional(State8080* state, byte Conditional, unsigned short adr);
-void jmpConditional(State8080* state, byte Conditional, unsigned short adr);
-void writeToMemory(State8080* state, unsigned short adr, byte value);
-void generateInterrupt(State8080* state, byte interrupt_num);
+void emulate8085Op(i8085* state);
+void add(i8085* state, byte r);
+void adc(i8085* state, byte r);
+void sub(i8085* state, byte r);
+void sbb(i8085* state, byte r);
+void ana(i8085* state, byte r);
+void xra(i8085* state, byte r);
+void ora(i8085* state, byte r);
+void cmp(i8085* state, byte r);
+void push(i8085* state, byte high, byte low);
+void pop(i8085* state, byte* high, byte* low);
+void retConditional(i8085* state, byte Conditional);
+void callConditional(i8085* state, byte Conditional, unsigned short adr);
+void jmpConditional(i8085* state, byte Conditional, unsigned short adr);
+void writeToMemory(i8085* state, unsigned short adr, byte value);
+void generateInterrupt(i8085* state, byte interrupt_num);

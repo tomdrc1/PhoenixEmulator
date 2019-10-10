@@ -3,13 +3,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "i8080.h"
+#include "i8085.h"
 
 #define MEMORY_SIZE 0x10000 //64K
 
 typedef struct phoenixArcadeMachine
 {
-	State8080* i8080;
+	i8085* i8085;
 
 
 } phoenixArcadeMachine;
@@ -24,15 +24,15 @@ void initMachine(phoenixArcadeMachine* machine);
 
 /*
 	Will initiate the machine (allocate memory and reset all registers)
-	input: A pointer to the State8080 struct
+	input: A pointer to the i8085 struct
 */
-void initCPU(State8080* i8080);
+void initCPU(i8085* i8085);
 
 /*
 	 Will read a file to the memory with the offset
-	 Input: A pointer to the State8080 struct, the file name, and the offset
+	 Input: A pointer to the i8085 struct, the file name, and the offset
 */
-void readFileToMemory(State8080* i8080, char* fileName, unsigned short offset);
+void readFileToMemory(i8085* i8085, char* fileName, unsigned short offset);
 
 /*
 	Will free all the allocation we made in the `init` function

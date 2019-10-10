@@ -1,4 +1,4 @@
-#include "i8080.h"
+#include "i8085.h"
 
 byte pairtyCheck(byte num, byte size)
 {
@@ -18,7 +18,7 @@ byte pairtyCheck(byte num, byte size)
 	return (count % 2 == 0);
 }
 
-void emulate8080Op(State8080* state)
+void emulate8085Op(i8085* state)
 {
 	byte* instruction = &state->memory[state->pc];
 
@@ -1197,7 +1197,7 @@ void emulate8080Op(State8080* state)
 	This function will emulate the ADD instruction
 	Input: A pointer to the struct that represents the current state of the CPU, a byte that holds the value of the register that we want to add to the acumlator
 */
-void add(State8080* state, byte r)
+void add(i8085* state, byte r)
 {
 	state->cc.ac = (((state->a & 0x0F) + (r & 0x0F)) & 0x10) == 0x10;
 	unsigned short res = state->a + r;
@@ -1214,7 +1214,7 @@ void add(State8080* state, byte r)
 	This function will emulate the ADC instruction (Add with carry)
 	Input: A pointer to the struct that represents the current state of the CPU, a byte that holds the value of the register that we want to add plus the carry
 */
-void adc(State8080* state, byte r)
+void adc(i8085* state, byte r)
 {
 	state->cc.ac = (((state->a & 0x0F) + (r & 0x0F) + state->cc.cy) & 0x10) == 0x10;
 	unsigned short res = state->a + r + state->cc.cy;
@@ -1231,7 +1231,7 @@ void adc(State8080* state, byte r)
 	This function will emulate the SUB instruction
 	Input: A pointer to the struct that represents the current state of the CPU, a byte that holds the value of the reigster that we want to sub
 */
-void sub(State8080* state, byte r)
+void sub(i8085* state, byte r)
 {
 	state->cc.ac = ((state->a & 0x0F) - (r & 0x0F)) < 0;
 	unsigned short res = state->a - r;
@@ -1248,7 +1248,7 @@ void sub(State8080* state, byte r)
 	This function will emulate the SBB insturction (sub register with carry)
 	Input: A pointer to a struct that represents the current state of the CPU, a byte that holds the value of the register that we want to sub
 */
-void sbb(State8080* state, byte r)
+void sbb(i8085* state, byte r)
 {
 	state->cc.ac = ((state->a & 0x0F) - (r & 0x0F) - state->cc.cy) < 0;
 	unsigned short res = state->a - r - state->cc.cy;
@@ -1265,7 +1265,7 @@ void sbb(State8080* state, byte r)
 	This function will emulate the ANA instruction (And operator on A register with r register)
 	Input: A pointer to a struct that represents the current state of the CPU, a byte that holds the value of the register that we want to AND with
 */
-void ana(State8080* state, byte r)
+void ana(i8085* state, byte r)
 {
 	//state->cc.ac ???
 	byte res = state->a & r;
@@ -1282,7 +1282,7 @@ void ana(State8080* state, byte r)
 	This function will emulate the XRA instruction (XOR operator on A register with r register
 	Input: A pointer to a struct that represents the current state of the CPU, a byte that holds teh value of the register that we want to XOR with
 */
-void xra(State8080* state, byte r)
+void xra(i8085* state, byte r)
 {
 	//state->cc.ac ???
 	byte res = state->a ^ r;
@@ -1299,7 +1299,7 @@ void xra(State8080* state, byte r)
 	This function will emulate the ORA instruction (OR operator on A with the R register)
 	Input: A pointer to the struct that represents the current state of the CPU, A byte that holds the register value
 */
-void ora(State8080* state, byte r)
+void ora(i8085* state, byte r)
 {
 	//state->cc.ac ???
 	byte res = state->a | r;
@@ -1316,7 +1316,7 @@ void ora(State8080* state, byte r)
 	This function will emulate the CMP instruction. It will subtract r from A and will turn on the flags by the result.
 	Input: A pointer to a struct that represents the current state of the CPU, A byte that holds the register value
 */
-void cmp(State8080* state, byte r)
+void cmp(i8085* state, byte r)
 {
 	state->cc.ac = ((state->a & 0x0F) - (r & 0x0F)) < 0;
 	unsigned short res = state->a - r;
@@ -1327,14 +1327,14 @@ void cmp(State8080* state, byte r)
 	state->cc.cy = ((res & 0xFF00) != 0);
 }
 
-void push(State8080* state, byte high, byte low)
+void push(i8085* state, byte high, byte low)
 {
 	writeToMemory(state, state->sp - 1, high);
 	writeToMemory(state, state->sp - 2, low);
 	state->sp -= 2;
 }
 
-void pop(State8080* state, byte* high, byte* low)
+void pop(i8085* state, byte* high, byte* low)
 {
 	*low = state->memory[state->sp];
 	*high = state->memory[state->sp + 1];
@@ -1342,7 +1342,7 @@ void pop(State8080* state, byte* high, byte* low)
 	state->sp += 2;
 }
 
-void retConditional(State8080* state, byte Conditional)
+void retConditional(i8085* state, byte Conditional)
 {
 	if (Conditional)
 	{
@@ -1352,7 +1352,7 @@ void retConditional(State8080* state, byte Conditional)
 	}
 }
 
-void callConditional(State8080* state, byte Conditional, unsigned short adr)
+void callConditional(i8085* state, byte Conditional, unsigned short adr)
 {
 	state->pc += 2;
 
@@ -1364,7 +1364,7 @@ void callConditional(State8080* state, byte Conditional, unsigned short adr)
 	}
 }
 
-void jmpConditional(State8080* state, byte Conditional, unsigned short adr)
+void jmpConditional(i8085* state, byte Conditional, unsigned short adr)
 {
 	if (Conditional)
 	{
@@ -1376,7 +1376,7 @@ void jmpConditional(State8080* state, byte Conditional, unsigned short adr)
 	}
 }
 
-void writeToMemory(State8080* state, unsigned short adr, byte value)
+void writeToMemory(i8085* state, unsigned short adr, byte value)
 {
 	if (adr < 0x2000)
 	{
@@ -1392,7 +1392,7 @@ void writeToMemory(State8080* state, unsigned short adr, byte value)
 	state->memory[adr] = value;
 }
 
-void generateInterrupt(State8080* state, byte interrupt_num)
+void generateInterrupt(i8085* state, byte interrupt_num)
 {
 	if (!state->int_enable)
 	{

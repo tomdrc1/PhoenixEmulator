@@ -21,7 +21,7 @@
     <ClCompile Include="phoenixArcadeMachine.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="i8080.c">
+    <ClCompile Include="i8085.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,7 +29,7 @@
     <ClInclude Include="phoenixArcadeMachine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="i8080.h">
+    <ClInclude Include="i8085.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
