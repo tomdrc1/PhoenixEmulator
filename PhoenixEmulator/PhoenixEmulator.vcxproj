@@ -136,6 +136,7 @@
   <ItemGroup>
     <ClInclude Include="i8085.h" />
     <ClInclude Include="phoenixArcadeMachine.h" />
+    <ClInclude Include="rom.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

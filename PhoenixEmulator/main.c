@@ -8,5 +8,7 @@ int main(int argc, char** argv)
 	phoenixArcadeMachine* machine = (phoenixArcadeMachine*)malloc(sizeof(phoenixArcadeMachine));
 
 	startEmulation(machine);
+
+	free(machine);
 	return 0;
 }

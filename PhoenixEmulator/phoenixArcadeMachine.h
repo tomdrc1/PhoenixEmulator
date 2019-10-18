@@ -3,20 +3,46 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <SDL.h>
 #include "i8085.h"
+#include "rom.h"
 
 #define MEMORY_SIZE 0x10000 //64K
+#define FGTILES_SIZE 0x1000
+#define BGTILES_SIZE 0x1000
+#define PROMS_SIZE 0x200
 
 #define CYCLES_PER_FRAME 5500000 / 60
 
+#define SCREEN_HEIGHT 208
+#define SCREEN_WIDTH 256
+
 typedef struct phoenixArcadeMachine
 {
-	i8085* i8085;
+	SDL_Window* screen;
+	SDL_Renderer* renderer;
+	SDL_Event sdlEvent;
 
+	i8085* i8085;
+	rom* bgtiles;
+	rom* fgtiles;
+	rom* proms;
 
 } phoenixArcadeMachine;
 
 void startEmulation(phoenixArcadeMachine* machine);
+
+/*
+	Will update the machine (Exectue 5500000 / 60 cycles)
+	Input: A pointer to the phoenixArcadeMachine struct
+*/
+void machineUpdate(phoenixArcadeMachine* machine);
+
+/*
+	Will draw to the screen every interrupt / frame
+	Input: A pointer to the phoenixArcadeMachine struct
+*/
+void draw(phoenixArcadeMachine* machine);
 
 /*
 	Will initiate the machine (allocate memory and reset all the struct stuff)
@@ -32,12 +58,14 @@ void initCPU(i8085* i8085);
 
 /*
 	 Will read a file to the memory with the offset
-	 Input: A pointer to the i8085 struct, the file name, and the offset
+	 Input: A pointer to the memory, the file name, and the offset
 */
-void readFileToMemory(i8085* i8085, char* fileName, unsigned short offset);
+void readFileToMemory(byte* memory, char* fileName, unsigned short offset);
 
 /*
 	Will free all the allocation we made in the `init` function
 	Input: A pointer to the phoenixArcadeMachine struct
 */
 void freeMachine(phoenixArcadeMachine* machine);
+
+void printMemoryToFile(phoenixArcadeMachine* machine);
