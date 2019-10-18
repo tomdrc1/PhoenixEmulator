@@ -28,6 +28,7 @@ typedef struct phoenixArcadeMachine
 	rom* fgtiles;
 	rom* proms;
 
+	byte dswSwitch;
 } phoenixArcadeMachine;
 
 void startEmulation(phoenixArcadeMachine* machine);
@@ -68,4 +69,15 @@ void readFileToMemory(byte* memory, char* fileName, unsigned short offset);
 */
 void freeMachine(phoenixArcadeMachine* machine);
 
+/*
+	Will write to the memory of the cpu of the machine. Will be used as a pointer function
+	input: A void pointer to the machine, the 16 bit address, the 8 bit value
+*/
+void wb(void* data, unsigned short addr, byte value);
+
+/*
+	Will return the byte data in the address. Will be used as a pointer function
+	input: A void pointer to the machine, the 16 bit address
+*/
+byte rb(void* data, unsigned short addr);
 void printMemoryToFile(phoenixArcadeMachine* machine);

@@ -108,6 +108,9 @@ void initMachine(phoenixArcadeMachine* machine)
 	machine->fgtiles->size = FGTILES_SIZE;
 	machine->proms->size = PROMS_SIZE;
 
+	machine->i8085->data = (phoenixArcadeMachine*)machine;
+	machine->i8085->writeMemory = wb;
+	machine->i8085->readMemory = rb;
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 
 	SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT, 0, &machine->screen, &machine->renderer);
@@ -177,6 +180,42 @@ void freeMachine(phoenixArcadeMachine* machine)
 
 	free(machine->i8085->memory);
 	free(machine->i8085);
+}
+
+void wb(void* data, unsigned short addr, byte value)
+{
+	phoenixArcadeMachine* machine = (phoenixArcadeMachine*)data;
+	if (addr < 0x4000)
+	{
+		printf("Writing ROM not allowed %x\n", addr);
+		return;
+	}
+
+	machine->i8085->memory[addr] = value;
+}
+
+byte rb(void* data, unsigned short addr)
+{
+	phoenixArcadeMachine* machine = (phoenixArcadeMachine*)data;
+
+	if (addr < 0x4000)
+	{
+		return machine->i8085->memory[addr];
+	}
+	else if (addr >= 0x7800 && addr < 0x7C00)
+	{
+		if (machine->dswSwitch)
+		{
+			machine->dswSwitch = 0;
+			return 0;
+		}
+		else
+		{
+			machine->dswSwitch = 1;
+			return 0x80;
+		}
+	}
+	return 0;
 }
 
 void printMemoryToFile(phoenixArcadeMachine* machine)

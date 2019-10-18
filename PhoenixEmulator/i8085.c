@@ -420,7 +420,7 @@ void emulate8085Op(i8085* state)
 		case 0x34:
 			{
 				unsigned short hl = (state->h << 8) | state->l;
-				byte value = state->memory[hl];
+				byte value = readFromMemory(state, hl);
 
 				state->cc.ac = (((value & 0x0F) + (0x01 & 0x0F)) & 0x10) == 0x10;
 				byte res = value + 1;
@@ -435,7 +435,7 @@ void emulate8085Op(i8085* state)
 		case 0x35:
 			{
 				unsigned short hl = (state->h << 8) | state->l;
-				byte value = state->memory[hl];
+				byte value = readFromMemory(state, hl);
 
 				state->cc.ac = ((value & 0x0F) - (0x01 & 0x0F)) < 0;
 				byte res = value - 1;
@@ -475,7 +475,7 @@ void emulate8085Op(i8085* state)
 		case 0x3A:
 			{
 				unsigned short adr = (instruction[2] << 8) | instruction[1];
-				state->a = state->memory[adr];
+				state->a = readFromMemory(state, adr);
 				state->pc += 2;
 			}
 			break;
@@ -534,7 +534,7 @@ void emulate8085Op(i8085* state)
 		case 0x46:
 			{
 				unsigned short hl = (state->h << 8) | state->l;
-				state->b = state->memory[hl];
+				state->b = readFromMemory(state, hl);
 			}
 			break;
 		case 0x47:
@@ -561,7 +561,7 @@ void emulate8085Op(i8085* state)
 		case 0x4E:
 			{
 				unsigned short hl = (state->h << 8) | state->l;
-				state->c = state->memory[hl];
+				state->c = readFromMemory(state, hl);
 			}
 			break;
 		case 0x4F:
@@ -588,7 +588,7 @@ void emulate8085Op(i8085* state)
 		case 0x56:
 			{
 				unsigned short hl = (state->h << 8) | state->l;
-				state->d = state->memory[hl];
+				state->d = readFromMemory(state, hl);
 			}
 			break;
 		case 0x57:
@@ -615,7 +615,7 @@ void emulate8085Op(i8085* state)
 		case 0x5E:
 			{
 				unsigned short hl = (state->h << 8) | state->l;
-				state->e = state->memory[hl];
+				state->e = readFromMemory(state, hl);
 			}
 			break;
 		case 0x5F:
@@ -642,7 +642,7 @@ void emulate8085Op(i8085* state)
 		case 0x66:
 			{
 				unsigned short hl = (state->h << 8) | state->l;
-				state->h = state->memory[hl];
+				state->h = readFromMemory(state, hl);
 			}
 			break;
 		case 0x67:
@@ -669,7 +669,7 @@ void emulate8085Op(i8085* state)
 		case 0x6E:
 			{
 				unsigned short hl = (state->h << 8) | state->l;
-				state->l = state->memory[hl];
+				state->l = readFromMemory(state, hl);
 			}
 			break;
 		case 0x6F:
@@ -741,7 +741,7 @@ void emulate8085Op(i8085* state)
 		case 0x7E:
 			{
 				unsigned short hl = (state->h << 8) | state->l;
-				state->a = state->memory[hl];
+				state->a = readFromMemory(state, hl);
 			}
 			break;
 		case 0x7F:
@@ -1381,15 +1381,14 @@ void jmpConditional(i8085* state, byte Conditional, unsigned short adr)
 	}
 }
 
-void writeToMemory(i8085* state, unsigned short adr, byte value)
+void writeToMemory(i8085* state, unsigned short addr, byte value)
 {
-	if (adr < 0x4000)
-	{
-		printf("Writing ROM not allowed %x\n", adr);
-		return;
-	}
-	
-	state->memory[adr] = value;
+	state->writeMemory(state->data, addr, value);
+}
+
+byte readFromMemory(i8085* state, unsigned short addr)
+{
+	return state->readMemory(state->data, addr);
 }
 
 void generateInterrupt(i8085* state, byte interrupt_num)

@@ -26,6 +26,10 @@ typedef struct i8085 {
 	ConditionCodes cc;
 	byte int_enable;
 	unsigned int cycles;
+
+	void* data;
+	void (*writeMemory)(void*, unsigned short, byte);
+	byte (*readMemory)(void*, unsigned short);
 } i8085;
 
 
@@ -64,5 +68,6 @@ void pop(i8085* state, byte* high, byte* low);
 void retConditional(i8085* state, byte Conditional);
 void callConditional(i8085* state, byte Conditional, unsigned short adr);
 void jmpConditional(i8085* state, byte Conditional, unsigned short adr);
-void writeToMemory(i8085* state, unsigned short adr, byte value);
+void writeToMemory(i8085* state, unsigned short addr, byte value);
+byte readFromMemory(i8085* state, unsigned short addr);
 void generateInterrupt(i8085* state, byte interrupt_num);
