@@ -29,6 +29,17 @@ typedef struct phoenixArcadeMachine
 	rom* proms;
 
 	byte dswSwitch;
+	/*
+		bit 0 - Coin
+		bit 1 - Start 1
+		bit 2 - Start 2
+		bit 3 - Unused 
+		bit 4 - Fire
+		bit 5 - Right
+		bit 6 - Left
+		bit 7 - Barrier
+	*/
+	byte inPort; 
 } phoenixArcadeMachine;
 
 void startEmulation(phoenixArcadeMachine* machine);
@@ -44,6 +55,12 @@ void machineUpdate(phoenixArcadeMachine* machine);
 	Input: A pointer to the phoenixArcadeMachine struct
 */
 void draw(phoenixArcadeMachine* machine);
+
+/*
+	Will get the color from the rom
+	Input: A pointer to the machine struct, the color value, a pointer to the red byte, a pointer to the green byte, a pointer to the blue byte
+*/
+void getColor(phoenixArcadeMachine* machine, byte val, byte* r, byte* g, byte* b);
 
 /*
 	Will initiate the machine (allocate memory and reset all the struct stuff)

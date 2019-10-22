@@ -79,8 +79,8 @@ void machineUpdate(phoenixArcadeMachine* machine)
 		{
 			printf("OUT ADDRESS %x", instruction[1]);
 		}
-		printf("PC: %x, SP: %x\n", machine->i8085->pc, machine->i8085->sp);
-		printf("A: %x, B: %x, C: %x, D: %x, E: %x, H: %x, L: %x, M: %x\n", machine->i8085->a, machine->i8085->b, machine->i8085->c, machine->i8085->d, machine->i8085->e, machine->i8085->h, machine->i8085->l, machine->i8085->memory[(machine->i8085->h << 8) | machine->i8085->l]);
+		//printf("PC: %x, SP: %x\n", machine->i8085->pc, machine->i8085->sp);
+		//printf("A: %x, B: %x, C: %x, D: %x, E: %x, H: %x, L: %x, M: %x\n", machine->i8085->a, machine->i8085->b, machine->i8085->c, machine->i8085->d, machine->i8085->e, machine->i8085->h, machine->i8085->l, machine->i8085->memory[(machine->i8085->h << 8) | machine->i8085->l]);
 	}
 }
 
@@ -88,7 +88,29 @@ void draw(phoenixArcadeMachine* machine)
 {
 	SDL_SetRenderDrawColor(machine->renderer, 0, 0, 0, 0);
 	SDL_RenderClear(machine->renderer);
+	SDL_SetRenderDrawColor(machine->renderer, 255, 255, 255, 255);
+
+	int i = 0, j = 0, k = 0;
+	byte val = 0;
+	
+	for (i = 0; i < 0x340; ++i)
+	{
+		val = machine->i8085->memory[0x4800 + i];
+
+		for (j = 0; j < 8; j++)
+		{
+
+		}
+	}
+	
 	SDL_RenderPresent(machine->renderer);
+}
+
+void getColor(phoenixArcadeMachine* machine, byte val, byte* r, byte* g, byte* b)
+{
+	*g = ((val >> 2) & 0x01) * 0xFF;
+	*b = ((val >> 1) & 0x01) * 0xFF;
+	*r = ((val >> 0) & 0x01) * 0xFF;
 }
 
 void initMachine(phoenixArcadeMachine* machine)
@@ -108,12 +130,15 @@ void initMachine(phoenixArcadeMachine* machine)
 	machine->fgtiles->size = FGTILES_SIZE;
 	machine->proms->size = PROMS_SIZE;
 
+	machine->inPort = 0;
+	machine->dswSwitch = 0;
+
 	machine->i8085->data = (phoenixArcadeMachine*)machine;
 	machine->i8085->writeMemory = wb;
 	machine->i8085->readMemory = rb;
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 
-	SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT, 0, &machine->screen, &machine->renderer);
+	SDL_CreateWindowAndRenderer(SCREEN_HEIGHT, SCREEN_WIDTH, 0, &machine->screen, &machine->renderer);
 	SDL_SetWindowResizable(machine->screen, SDL_TRUE);
 	SDL_ShowCursor(SDL_DISABLE);
 }
@@ -190,6 +215,18 @@ void wb(void* data, unsigned short addr, byte value)
 		printf("Writing ROM not allowed %x\n", addr);
 		return;
 	}
+	else if (addr >= 0x4000 && addr <= 0x4fff)
+	{
+		printf("Writing to VRAM %x at address: %x\n", value, addr);
+	}
+	else if (addr >= 0x5000 && addr <= 0x53FF)
+	{
+		printf("Writing to Video Reg %x at address: %x\n", value, addr);
+	}
+	else if (addr >= 0x5800 && addr <= 0x5BFF)
+	{
+		printf("Writing to Video Scroll %x at address: %x\n", value, addr);
+	}
 
 	machine->i8085->memory[addr] = value;
 }
@@ -202,7 +239,11 @@ byte rb(void* data, unsigned short addr)
 	{
 		return machine->i8085->memory[addr];
 	}
-	else if (addr >= 0x7800 && addr < 0x7C00)
+	else if (addr >= 0x7000 && addr <= 0x73FF)
+	{
+		return machine->inPort;
+	}
+	else if (addr >= 0x7800 && addr <= 0x7BFF)
 	{
 		if (machine->dswSwitch)
 		{
