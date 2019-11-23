@@ -90,16 +90,23 @@ void draw(phoenixArcadeMachine* machine)
 	SDL_RenderClear(machine->renderer);
 	SDL_SetRenderDrawColor(machine->renderer, 255, 255, 255, 255);
 
-	int i = 0, j = 0, k = 0;
+	int i = 0, x = 0, y = 0;
 	byte val = 0;
-	
-	for (i = 0; i < 0x340; ++i)
+	byte px = 0;
+	byte py = 0;
+
+	for (i = 0; i < 832; ++i)
 	{
 		val = machine->i8085->memory[0x4800 + i];
 
-		for (j = 0; j < 8; j++)
+		for (y = 0; y < 8; y++)
 		{
-
+			for (x = 0; x < 8; x++)
+			{
+				
+				
+				SDL_RenderDrawPoint(machine->renderer, px, py);
+			}
 		}
 	}
 	
@@ -217,15 +224,15 @@ void wb(void* data, unsigned short addr, byte value)
 	}
 	else if (addr >= 0x4000 && addr <= 0x4fff)
 	{
-		printf("Writing to VRAM %x at address: %x\n", value, addr);
+		//printf("Writing to VRAM %x at address: %x\n", value, addr);
 	}
 	else if (addr >= 0x5000 && addr <= 0x53FF)
 	{
-		printf("Writing to Video Reg %x at address: %x\n", value, addr);
+		//printf("Writing to Video Reg %x at address: %x\n", value, addr);
 	}
 	else if (addr >= 0x5800 && addr <= 0x5BFF)
 	{
-		printf("Writing to Video Scroll %x at address: %x\n", value, addr);
+		//printf("Writing to Video Scroll %x at address: %x\n", value, addr);
 	}
 
 	machine->i8085->memory[addr] = value;
