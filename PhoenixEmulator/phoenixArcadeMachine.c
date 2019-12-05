@@ -95,19 +95,13 @@ void draw(phoenixArcadeMachine* machine)
 	byte px = 0;
 	byte py = 0;
 
-	for (i = 0; i < 832; ++i)
+	for (y = 0; y < 32; ++y)
 	{
-		val = machine->i8085->memory[0x4800 + i];
-
-		for (y = 0; y < 8; y++)
+		for (x = 0; x < 26; x++)
 		{
-			for (x = 0; x < 8; x++)
-			{
-				
-				
-				SDL_RenderDrawPoint(machine->renderer, px, py);
-			}
+			
 		}
+		//val = machine->i8085->memory[0x4800 + i];
 	}
 	
 	SDL_RenderPresent(machine->renderer);
