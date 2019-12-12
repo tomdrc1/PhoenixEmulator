@@ -8,14 +8,19 @@
 #include "rom.h"
 
 #define MEMORY_SIZE 0x10000 //64K
-#define FGTILES_SIZE 0x1000
-#define BGTILES_SIZE 0x1000
+#define TILES_SIZE 0x2000
 #define PROMS_SIZE 0x200
+#define PALETTE_SIZE 0x80
+#define BGTILES_MEMORY_START 0x4800
+#define FGTILES_MEMORY_START 0x4000
 
 #define CYCLES_PER_FRAME 5500000 / 60
 
 #define SCREEN_HEIGHT 208
 #define SCREEN_WIDTH 256
+
+typedef unsigned int u32;
+typedef unsigned short u16;
 
 typedef struct phoenixArcadeMachine
 {
@@ -24,11 +29,15 @@ typedef struct phoenixArcadeMachine
 	SDL_Event sdlEvent;
 
 	i8085* i8085;
-	rom* bgtiles;
-	rom* fgtiles;
+	rom* tiles;
 	rom* proms;
 
 	byte dswSwitch;
+	byte videoControl;
+	byte scrollReg;
+	u32 palette[PALETTE_SIZE];
+	
+	u32**** characters;
 	/*
 		bit 0 - Coin
 		bit 1 - Start 1
@@ -57,12 +66,6 @@ void machineUpdate(phoenixArcadeMachine* machine);
 void draw(phoenixArcadeMachine* machine);
 
 /*
-	Will get the color from the rom
-	Input: A pointer to the machine struct, the color value, a pointer to the red byte, a pointer to the green byte, a pointer to the blue byte
-*/
-void getColor(phoenixArcadeMachine* machine, byte val, byte* r, byte* g, byte* b);
-
-/*
 	Will initiate the machine (allocate memory and reset all the struct stuff)
 	Input: A pointer to the phoenixArcadeMachine struct
 */
@@ -73,6 +76,18 @@ void initMachine(phoenixArcadeMachine* machine);
 	input: A pointer to the i8085 struct
 */
 void initCPU(i8085* i8085);
+
+/*
+	Will generate the palette from the palette roms
+	Input: A pointer to the Phoenix Arcade Machine struct
+*/
+void makePalette(phoenixArcadeMachine* machine);
+
+/*
+	Will generate the characters of the graphics (8*8 kind of tiles)
+	Input: A pointer to the Phoenix arcade machine struct, The index of the palette(0, 1)
+*/
+void generateCharacters(phoenixArcadeMachine* machine, byte paletteIndex);
 
 /*
 	 Will read a file to the memory with the offset

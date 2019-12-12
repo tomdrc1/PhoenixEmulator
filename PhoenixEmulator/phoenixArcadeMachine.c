@@ -15,15 +15,18 @@ void startEmulation(phoenixArcadeMachine* machine)
 	readFileToMemory(machine->i8085->memory, "Game\\h7-ic51.7a", 0x3000);
 	readFileToMemory(machine->i8085->memory, "Game\\h8-ic52.8a", 0x3800);
 
-	readFileToMemory(machine->bgtiles->memory, "Game\\ic23.3d", 0x0000);
-	readFileToMemory(machine->bgtiles->memory, "Game\\ic24.4d", 0x0800);
-
-	readFileToMemory(machine->fgtiles->memory, "Game\\b1-ic39.3b", 0x0000);
-	readFileToMemory(machine->fgtiles->memory, "Game\\b2-ic40.4b", 0x0800);
+	readFileToMemory(machine->tiles->memory, "Game\\b1-ic39.3b", 0x0000);
+	readFileToMemory(machine->tiles->memory, "Game\\ic23.3d", 0x0800);
+	readFileToMemory(machine->tiles->memory, "Game\\b2-ic40.4b", 0x1000);
+	readFileToMemory(machine->tiles->memory, "Game\\ic24.4d", 0x1800);
 
 	readFileToMemory(machine->proms->memory, "Game\\mmi6301.ic40", 0x0000);
 	readFileToMemory(machine->proms->memory, "Game\\mmi6301.ic41", 0x0100);
 
+	makePalette(machine);
+	generateCharacters(machine, 0);
+	generateCharacters(machine, 1);
+	
 	unsigned int timer = SDL_GetTicks();
 
 	while (!exit)
@@ -42,7 +45,7 @@ void startEmulation(phoenixArcadeMachine* machine)
 
 			else if (machine->sdlEvent.type == SDL_WINDOWEVENT && machine->sdlEvent.window.event == SDL_WINDOWEVENT_RESIZED)
 			{
-				SDL_RenderSetScale(machine->renderer, (float)machine->sdlEvent.window.data1 / SCREEN_WIDTH, (float)machine->sdlEvent.window.data2 / SCREEN_HEIGHT);
+				SDL_RenderSetScale(machine->renderer, (float)machine->sdlEvent.window.data1 / SCREEN_HEIGHT, (float)machine->sdlEvent.window.data2 / SCREEN_WIDTH);
 			}
 		}
 
@@ -64,7 +67,6 @@ void machineUpdate(phoenixArcadeMachine* machine)
 
 	while (cyclesCount <= CYCLES_PER_FRAME)
 	{
-		//printMemoryToFile(machine);
 		currentCycles = machine->i8085->cycles;
 		byte* instruction = &machine->i8085->memory[machine->i8085->pc];
 
@@ -90,28 +92,64 @@ void draw(phoenixArcadeMachine* machine)
 	SDL_RenderClear(machine->renderer);
 	SDL_SetRenderDrawColor(machine->renderer, 255, 255, 255, 255);
 
-	int i = 0, x = 0, y = 0;
-	byte val = 0;
-	byte px = 0;
-	byte py = 0;
+	byte paletteControl = (machine->videoControl & 0x02) >> 1;
+	u16 bankOffset = (machine->videoControl & 0x01) * 0x400;
+	
+	u32*** characterArr = machine->characters[paletteControl];
+	
+	byte y = 0, x = 0;
+	byte i = 0, j = 0;
+	
+	u16 memoryPos = 0;
 
 	for (y = 0; y < 32; ++y)
 	{
-		for (x = 0; x < 26; x++)
+		memoryPos = BGTILES_MEMORY_START + 32 * 25 + y + bankOffset;
+
+		// The reason for this "Real Y" is because the scroll register will tell us where to start in the screen (For scrolling effect)
+		byte realY = ((y * 8) + (256 - machine->scrollReg)) & 0xFF;
+		for (x = 0; x < 26; ++x)
 		{
-			
+			for (i = 0; i < 8; ++i)
+			{
+				for (j = 0; j < 8; ++j)
+				{
+					u32 color = characterArr[0x100 + machine->i8085->memory[memoryPos]][i][j];
+					SDL_SetRenderDrawColor(machine->renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF);
+
+					SDL_RenderDrawPoint(machine->renderer, (x << 3) + i, realY + j);
+				}
+			}
+
+			memoryPos -= 32;
 		}
-		//val = machine->i8085->memory[0x4800 + i];
+	}
+	
+	for (y = 0; y < 32; ++y)
+	{
+		memoryPos = FGTILES_MEMORY_START + 32 * 25 + y + bankOffset;
+		for (x = 0; x < 26; ++x)
+		{
+			for (i = 0; i < 8; ++i)
+			{	
+				for (j = 0; j < 8; ++j)
+				{
+					u32 color = characterArr[machine->i8085->memory[memoryPos]][i][j];
+
+					if (color == 0xFF000000)
+					{
+						continue;
+					}
+					SDL_SetRenderDrawColor(machine->renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF);
+					SDL_RenderDrawPoint(machine->renderer, (x << 3) + i, (y << 3) + j);
+				}
+			}
+			
+			memoryPos -= 32;
+		}
 	}
 	
 	SDL_RenderPresent(machine->renderer);
-}
-
-void getColor(phoenixArcadeMachine* machine, byte val, byte* r, byte* g, byte* b)
-{
-	*g = ((val >> 2) & 0x01) * 0xFF;
-	*b = ((val >> 1) & 0x01) * 0xFF;
-	*r = ((val >> 0) & 0x01) * 0xFF;
 }
 
 void initMachine(phoenixArcadeMachine* machine)
@@ -119,24 +157,55 @@ void initMachine(phoenixArcadeMachine* machine)
 	machine->i8085 = (i8085*)malloc(sizeof(i8085));
 	initCPU(machine->i8085);
 
-	machine->bgtiles = (rom*)malloc(sizeof(rom));
-	machine->fgtiles = (rom*)malloc(sizeof(rom));
+	machine->tiles = (rom*)malloc(sizeof(rom));
 	machine->proms = (rom*)malloc(sizeof(rom));
 
-	machine->bgtiles->memory = (byte*)malloc(sizeof(byte) * BGTILES_SIZE);
-	machine->fgtiles->memory = (byte*)malloc(sizeof(byte) * FGTILES_SIZE);
+	machine->tiles->memory = (byte*)malloc(sizeof(byte) * TILES_SIZE);
 	machine->proms->memory = (byte*)malloc(sizeof(byte) * PROMS_SIZE);
 
-	machine->bgtiles->size = BGTILES_SIZE;
-	machine->fgtiles->size = FGTILES_SIZE;
+	machine->tiles->size = TILES_SIZE;
 	machine->proms->size = PROMS_SIZE;
 
 	machine->inPort = 0;
 	machine->dswSwitch = 0;
+	machine->scrollReg = 0;
+	machine->videoControl = 0;
+
 
 	machine->i8085->data = (phoenixArcadeMachine*)machine;
 	machine->i8085->writeMemory = wb;
 	machine->i8085->readMemory = rb;
+
+	machine->characters = (u32****)malloc(sizeof(u32***) * 2);
+
+	machine->characters[0] = (u32***)malloc(sizeof(u32**) * 0x200);
+	machine->characters[1] = (u32***)malloc(sizeof(u32**) * 0x200);
+
+	u16 i = 0;
+	for (i = 0; i < 0x200; ++i)
+	{
+		machine->characters[0][i] = (u32**)malloc(sizeof(u32*) * 8);
+		machine->characters[1][i] = (u32**)malloc(sizeof(u32*) * 8);
+
+		machine->characters[0][i][0] = (u32*)malloc(sizeof(u32) * 8);
+		machine->characters[0][i][1] = (u32*)malloc(sizeof(u32) * 8);
+		machine->characters[0][i][2] = (u32*)malloc(sizeof(u32) * 8);
+		machine->characters[0][i][3] = (u32*)malloc(sizeof(u32) * 8);
+		machine->characters[0][i][4] = (u32*)malloc(sizeof(u32) * 8);
+		machine->characters[0][i][5] = (u32*)malloc(sizeof(u32) * 8);
+		machine->characters[0][i][6] = (u32*)malloc(sizeof(u32) * 8);
+		machine->characters[0][i][7] = (u32*)malloc(sizeof(u32) * 8);
+
+		machine->characters[1][i][0] = (u32*)malloc(sizeof(u32) * 8);
+		machine->characters[1][i][1] = (u32*)malloc(sizeof(u32) * 8);
+		machine->characters[1][i][2] = (u32*)malloc(sizeof(u32) * 8);
+		machine->characters[1][i][3] = (u32*)malloc(sizeof(u32) * 8);
+		machine->characters[1][i][4] = (u32*)malloc(sizeof(u32) * 8);
+		machine->characters[1][i][5] = (u32*)malloc(sizeof(u32) * 8);
+		machine->characters[1][i][6] = (u32*)malloc(sizeof(u32) * 8);
+		machine->characters[1][i][7] = (u32*)malloc(sizeof(u32) * 8);
+	}
+
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 
 	SDL_CreateWindowAndRenderer(SCREEN_HEIGHT, SCREEN_WIDTH, 0, &machine->screen, &machine->renderer);
@@ -173,6 +242,65 @@ void initCPU(i8085* i8085)
 	i8085->cycles = 0;
 }
 
+void makePalette(phoenixArcadeMachine* machine)
+{
+	int i = 0;
+
+	byte plane0 = 0;
+	byte plane1 = 0;
+
+	byte r = 0, g = 0, b = 0;
+	for (i = 0; i < PALETTE_SIZE; ++i)
+	{
+		plane0 = machine->proms->memory[i];
+		plane1 = machine->proms->memory[i + 0x100];
+		
+		r = (((plane0 >> 0) & 0x01) | (((plane1 >> 0) & 0x01) << 1)) * 85;
+		g = (((plane0 >> 2) & 0x01) | (((plane1 >> 2) & 0x01) << 1)) * 85;
+		b = (((plane0 >> 1) & 0x01) | (((plane1 >> 1) & 0x01) << 1)) * 85;
+
+		machine->palette[i] = 0xFF000000 | (r << 16) | (g << 8) | b;
+	}
+}
+
+void generateCharacters(phoenixArcadeMachine* machine, byte paletteIndex)
+{
+	byte charSector = 0, charBank = 0;
+	byte line1 = 0, line2 = 0;
+	u16 charIndex = 0;
+
+	byte i = 0, j = 0;
+	byte mask = 0;
+	byte bit1 = 0, bit2 = 0;
+	byte paletteLookup = 0;
+	u32*** charactersArr = machine->characters[paletteIndex];
+
+	for (charIndex = 0; charIndex < 0x200; charIndex++)
+	{
+		charSector = ((charIndex & 0xFF) >> 5);
+		charBank = (charIndex & 0x100) == 0 ? 1 : 0;
+
+		for (i = 0; i < 8; i++)
+		{
+			// +7 -i to flip the inverted data in the memory (Take the last first and the first last)
+			line1 = machine->tiles->memory[(charIndex * 8) + 7 - i];
+			line2 = machine->tiles->memory[(charIndex * 8) + 7 - i + 0x1000];
+
+			for (j = 0; j < 8; ++j)
+			{
+				mask = 1 << j;
+
+				bit1 = (line1 & mask) >> j;
+				bit2 = (line2 & mask) >> j;
+
+				paletteLookup = charSector | (bit1 << 3) | (bit2 << 4) | (charBank << 5) | (paletteIndex << 6);
+
+				charactersArr[charIndex][i][j] = machine->palette[paletteLookup];
+			}
+		}
+	}
+}
+
 void readFileToMemory(byte* memory, char* fileName, unsigned short offset)
 {
 	FILE* f = fopen(fileName, "rb");
@@ -197,11 +325,41 @@ void freeMachine(phoenixArcadeMachine* machine)
 	SDL_DestroyRenderer(machine->renderer);
 	SDL_DestroyWindow(machine->screen);
 
-	free(machine->bgtiles->memory);
-	free(machine->fgtiles->memory);
+	u16 i = 0;
+
+	for (i = 0; i < 0x200; ++i)
+	{
+		free(machine->characters[0][i][0]);
+		free(machine->characters[0][i][1]);
+		free(machine->characters[0][i][2]);
+		free(machine->characters[0][i][3]);
+		free(machine->characters[0][i][4]);
+		free(machine->characters[0][i][5]);
+		free(machine->characters[0][i][6]);
+		free(machine->characters[0][i][7]);
+
+		free(machine->characters[1][i][0]);
+		free(machine->characters[1][i][1]);
+		free(machine->characters[1][i][2]);
+		free(machine->characters[1][i][3]);
+		free(machine->characters[1][i][4]);
+		free(machine->characters[1][i][5]);
+		free(machine->characters[1][i][6]);
+		free(machine->characters[1][i][7]);
+
+		free(machine->characters[0][i]);
+		free(machine->characters[1][i]);
+	}
+
+	free(machine->characters[0]);
+	free(machine->characters[1]);
+	
+	free(machine->characters);
+
+
+	free(machine->tiles->memory);
 	free(machine->proms->memory);
-	free(machine->bgtiles);
-	free(machine->fgtiles);
+	free(machine->tiles);
 	free(machine->proms);
 
 	free(machine->i8085->memory);
@@ -213,23 +371,29 @@ void wb(void* data, unsigned short addr, byte value)
 	phoenixArcadeMachine* machine = (phoenixArcadeMachine*)data;
 	if (addr < 0x4000)
 	{
-		printf("Writing ROM not allowed %x\n", addr);
+		//printf("Writing ROM not allowed %x\n", addr);
 		return;
 	}
-	else if (addr >= 0x4000 && addr <= 0x4fff)
+	else if (((addr >= 0x4000 && addr <= 0x43FF) || (addr >= 0x4800 && addr <= 0x4BFF)) && (machine->videoControl & 0x1) == 1)
 	{
-		//printf("Writing to VRAM %x at address: %x\n", value, addr);
+		machine->i8085->memory[addr + 0x400] = value;
+		return;
+	}
+	else if (addr >= 0x4000 && addr < 0x8000)
+	{
+		machine->i8085->memory[addr] = value;
+		return;
 	}
 	else if (addr >= 0x5000 && addr <= 0x53FF)
 	{
-		//printf("Writing to Video Reg %x at address: %x\n", value, addr);
+		machine->videoControl = value;
+		return;
 	}
 	else if (addr >= 0x5800 && addr <= 0x5BFF)
 	{
-		//printf("Writing to Video Scroll %x at address: %x\n", value, addr);
+		machine->scrollReg = value;
+		return;
 	}
-
-	machine->i8085->memory[addr] = value;
 }
 
 byte rb(void* data, unsigned short addr)
@@ -244,6 +408,14 @@ byte rb(void* data, unsigned short addr)
 	{
 		return machine->inPort;
 	}
+	else if (addr >= 0x5000 && addr <= 0x53FF)
+	{
+		return machine->videoControl;
+	}
+	else if (((addr >= 0x4000 && addr <= 0x43FF) || (addr >= 0x4800 && addr <= 0x4BFF)) && (machine->videoControl & 0x1) == 1)
+	{
+		return machine->i8085->memory[addr + 0x400];
+	}
 	else if (addr >= 0x7800 && addr <= 0x7BFF)
 	{
 		if (machine->dswSwitch)
@@ -257,7 +429,7 @@ byte rb(void* data, unsigned short addr)
 			return 0x80;
 		}
 	}
-	return 0;
+	return machine->i8085->memory[addr];
 }
 
 void printMemoryToFile(phoenixArcadeMachine* machine)
