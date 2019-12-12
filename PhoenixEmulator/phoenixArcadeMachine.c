@@ -41,8 +41,60 @@ void startEmulation(phoenixArcadeMachine* machine)
 			else if (machine->sdlEvent.type == SDL_KEYDOWN)
 			{
 				const unsigned int key = machine->sdlEvent.key.keysym.scancode;
+				switch (key)
+				{
+					case SDL_SCANCODE_C:
+						machine->inPort &= ~(1 << 0); // Coin
+						break;
+					case SDL_SCANCODE_RETURN:
+						machine->inPort &= ~(1 << 1); // Start 1 player
+						break;
+					case SDL_SCANCODE_2:
+						machine->inPort &= ~(1 << 2); // Start 2 player
+						break;
+					case SDL_SCANCODE_SPACE:
+						machine->inPort &= ~(1 << 4); // Fire
+						break;
+					case SDL_SCANCODE_RIGHT:
+						machine->inPort &= ~(1 << 5); // Player move right
+						break;
+					case SDL_SCANCODE_LEFT:
+						machine->inPort &= ~(1 << 6); // Player move left
+						break;
+					case SDL_SCANCODE_S:
+						machine->inPort &= ~(1 << 7); // Shield
+						break;
+				}
 			}
 
+			else if (machine->sdlEvent.type == SDL_KEYUP)
+			{
+				const unsigned int key = machine->sdlEvent.key.keysym.scancode;
+				switch (key)
+				{
+				case SDL_SCANCODE_C:
+					machine->inPort |= (1 << 0); // Coin
+					break;
+				case SDL_SCANCODE_RETURN:
+					machine->inPort |= (1 << 1); // Start 1 player
+					break;
+				case SDL_SCANCODE_2:
+					machine->inPort |= (1 << 2); // Start 2 player
+					break;
+				case SDL_SCANCODE_SPACE:
+					machine->inPort |= (1 << 4); // Fire
+					break;
+				case SDL_SCANCODE_RIGHT:
+					machine->inPort |= (1 << 5); // Player move right
+					break;
+				case SDL_SCANCODE_LEFT:
+					machine->inPort |= (1 << 6); // Player move left
+					break;
+				case SDL_SCANCODE_S:
+					machine->inPort |= (1 << 7); // Shield
+					break;
+				}
+			}
 			else if (machine->sdlEvent.type == SDL_WINDOWEVENT && machine->sdlEvent.window.event == SDL_WINDOWEVENT_RESIZED)
 			{
 				SDL_RenderSetScale(machine->renderer, (float)machine->sdlEvent.window.data1 / SCREEN_HEIGHT, (float)machine->sdlEvent.window.data2 / SCREEN_WIDTH);
@@ -166,11 +218,10 @@ void initMachine(phoenixArcadeMachine* machine)
 	machine->tiles->size = TILES_SIZE;
 	machine->proms->size = PROMS_SIZE;
 
-	machine->inPort = 0;
+	machine->inPort = 0xFF;
 	machine->dswSwitch = 0;
 	machine->scrollReg = 0;
 	machine->videoControl = 0;
-
 
 	machine->i8085->data = (phoenixArcadeMachine*)machine;
 	machine->i8085->writeMemory = wb;
