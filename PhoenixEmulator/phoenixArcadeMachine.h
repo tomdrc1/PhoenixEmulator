@@ -40,7 +40,9 @@ typedef struct phoenixArcadeMachine
 	u32 palette[PALETTE_SIZE];
 	
 	u32**** characters;
+
 	/*
+		Active low.
 		bit 0 - Coin
 		bit 1 - Start 1
 		bit 2 - Start 2
@@ -74,7 +76,7 @@ void draw(phoenixArcadeMachine* machine);
 void initMachine(phoenixArcadeMachine* machine);
 
 /*
-	Will initiate the machine (allocate memory and reset all registers)
+	Will initiate the CPU (allocate memory and reset all registers)
 	input: A pointer to the i8085 struct
 */
 void initCPU(i8085* i8085);
