@@ -61,7 +61,7 @@ void startEmulation(phoenixArcadeMachine* machine)
 					case SDL_SCANCODE_LEFT:
 						machine->inPort &= ~(1 << 6); // Player move left
 						break;
-					case SDL_SCANCODE_S:
+					case SDL_SCANCODE_X:
 						machine->inPort &= ~(1 << 7); // Shield
 						break;
 				}
@@ -90,7 +90,7 @@ void startEmulation(phoenixArcadeMachine* machine)
 				case SDL_SCANCODE_LEFT:
 					machine->inPort |= (1 << 6); // Player move left
 					break;
-				case SDL_SCANCODE_S:
+				case SDL_SCANCODE_X:
 					machine->inPort |= (1 << 7); // Shield
 					break;
 				}
@@ -106,6 +106,7 @@ void startEmulation(phoenixArcadeMachine* machine)
 			timer = SDL_GetTicks();
 			machineUpdate(machine);
 			draw(machine);
+			machine->dswSwitch = 1;
 		}
 	}
 
@@ -125,16 +126,14 @@ void machineUpdate(phoenixArcadeMachine* machine)
 		emulate8085Op(machine->i8085);
 		cyclesCount += machine->i8085->cycles - currentCycles;
 
-		if (*instruction == 0xdb)
+
+		
+		if (machine->i8085->cycles >= CYCLES_TO_VBLANK)
 		{
-			printf("IN ADDRESS %x", instruction[1]);
+			machine->i8085->cycles -= CYCLES_TO_VBLANK;
+			machine->dswSwitch = 1;
+			//draw(machine);
 		}
-		else if (*instruction == 0xd3) //OUT    
-		{
-			printf("OUT ADDRESS %x", instruction[1]);
-		}
-		//printf("PC: %x, SP: %x\n", machine->i8085->pc, machine->i8085->sp);
-		//printf("A: %x, B: %x, C: %x, D: %x, E: %x, H: %x, L: %x, M: %x\n", machine->i8085->a, machine->i8085->b, machine->i8085->c, machine->i8085->d, machine->i8085->e, machine->i8085->h, machine->i8085->l, machine->i8085->memory[(machine->i8085->h << 8) | machine->i8085->l]);
 	}
 }
 
@@ -160,6 +159,7 @@ void draw(phoenixArcadeMachine* machine)
 
 		// The reason for this "Real Y" is because the scroll register will tell us where to start in the screen (For scrolling effect)
 		byte realY = ((y * 8) + (256 - machine->scrollReg)) & 0xFF;
+
 		for (x = 0; x < 26; ++x)
 		{
 			for (i = 0; i < 8; ++i)
@@ -176,7 +176,7 @@ void draw(phoenixArcadeMachine* machine)
 			memoryPos -= 32;
 		}
 	}
-	
+
 	for (y = 0; y < 32; ++y)
 	{
 		memoryPos = FGTILES_MEMORY_START + 32 * 25 + y + bankOffset;
@@ -200,7 +200,7 @@ void draw(phoenixArcadeMachine* machine)
 			memoryPos -= 32;
 		}
 	}
-	
+
 	SDL_RenderPresent(machine->renderer);
 }
 
@@ -422,7 +422,6 @@ void wb(void* data, unsigned short addr, byte value)
 	phoenixArcadeMachine* machine = (phoenixArcadeMachine*)data;
 	if (addr < 0x4000)
 	{
-		//printf("Writing ROM not allowed %x\n", addr);
 		return;
 	}
 	else if (((addr >= 0x4000 && addr <= 0x43FF) || (addr >= 0x4800 && addr <= 0x4BFF)) && (machine->videoControl & 0x1) == 1)
@@ -444,6 +443,14 @@ void wb(void* data, unsigned short addr, byte value)
 	{
 		machine->scrollReg = value;
 		return;
+	}
+	else if (addr >= 0x6000 && addr <= 0x63FF)
+	{
+		printf("Wrote to data: %x\n", value);
+	}
+	else if (addr >= 0x6800 && addr <= 0x6BFF)
+	{
+		printf("Wrote to data: %x\n", value);
 	}
 }
 
@@ -472,12 +479,11 @@ byte rb(void* data, unsigned short addr)
 		if (machine->dswSwitch)
 		{
 			machine->dswSwitch = 0;
-			return 0;
+			return 0x80;
 		}
 		else
 		{
-			machine->dswSwitch = 1;
-			return 0x80;
+			return 0;
 		}
 	}
 	return machine->i8085->memory[addr];

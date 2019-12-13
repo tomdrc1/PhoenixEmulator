@@ -14,7 +14,8 @@
 #define BGTILES_MEMORY_START 0x4800
 #define FGTILES_MEMORY_START 0x4000
 
-#define CYCLES_PER_FRAME 5500000 / 60
+#define CYCLES_PER_FRAME 740000 / 60
+#define CYCLES_TO_VBLANK 12000
 
 #define SCREEN_HEIGHT 208
 #define SCREEN_WIDTH 256
@@ -33,6 +34,7 @@ typedef struct phoenixArcadeMachine
 	rom* proms;
 
 	byte dswSwitch;
+
 	byte videoControl;
 	byte scrollReg;
 	u32 palette[PALETTE_SIZE];
