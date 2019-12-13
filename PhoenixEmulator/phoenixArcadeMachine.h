@@ -70,6 +70,12 @@ void machineUpdate(phoenixArcadeMachine* machine);
 void draw(phoenixArcadeMachine* machine);
 
 /*
+	Will draw a single tile (8x8 pixels), will start drawing 8*8 tile from the xy and y
+	Input: A pointer to the PhoenixArcadeMachine struct, the x coordinate, the y coordinate, the character array, the position in the memory to get the wanted tile, offset to which character to take in the array (for example all the background characters start from 0x100)
+*/
+void drawTile(phoenixArcadeMachine* machine, byte x, byte y, u32*** characterArr, u16 memoryPos, u16 characterOffset);
+
+/*
 	Will initiate the machine (allocate memory and reset all the struct stuff)
 	Input: A pointer to the phoenixArcadeMachine struct
 */

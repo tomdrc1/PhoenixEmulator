@@ -144,7 +144,6 @@ void draw(phoenixArcadeMachine* machine)
 	SDL_SetRenderDrawColor(machine->renderer, 255, 255, 255, 255);
 
 	byte paletteControl = (machine->videoControl & 0x02) >> 1;
-	u16 bankOffset = (machine->videoControl & 0x01) * 0x400;
 	
 	u32*** characterArr = machine->characters[paletteControl];
 	
@@ -155,53 +154,49 @@ void draw(phoenixArcadeMachine* machine)
 
 	for (y = 0; y < 32; ++y)
 	{
-		memoryPos = BGTILES_MEMORY_START + 32 * 25 + y + bankOffset;
+		memoryPos = BGTILES_MEMORY_START + 32 * 25 + y;
 
 		// The reason for this "Real Y" is because the scroll register will tell us where to start in the screen (For scrolling effect)
 		byte realY = ((y * 8) + (256 - machine->scrollReg)) & 0xFF;
 
 		for (x = 0; x < 26; ++x)
 		{
-			for (i = 0; i < 8; ++i)
-			{
-				for (j = 0; j < 8; ++j)
-				{
-					u32 color = characterArr[0x100 + machine->i8085->memory[memoryPos]][i][j];
-					SDL_SetRenderDrawColor(machine->renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF);
-
-					SDL_RenderDrawPoint(machine->renderer, (x << 3) + i, realY + j);
-				}
-			}
-
+			drawTile(machine, x * 8, realY, characterArr, memoryPos, 0x100);
 			memoryPos -= 32;
 		}
 	}
 
 	for (y = 0; y < 32; ++y)
 	{
-		memoryPos = FGTILES_MEMORY_START + 32 * 25 + y + bankOffset;
+		memoryPos = FGTILES_MEMORY_START + 32 * 25 + y;
 		for (x = 0; x < 26; ++x)
 		{
-			for (i = 0; i < 8; ++i)
-			{	
-				for (j = 0; j < 8; ++j)
-				{
-					u32 color = characterArr[machine->i8085->memory[memoryPos]][i][j];
-
-					if (color == 0xFF000000)
-					{
-						continue;
-					}
-					SDL_SetRenderDrawColor(machine->renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF);
-					SDL_RenderDrawPoint(machine->renderer, (x << 3) + i, (y << 3) + j);
-				}
-			}
-			
+			drawTile(machine, x * 8, y * 8, characterArr, memoryPos, 0);
 			memoryPos -= 32;
 		}
 	}
 
 	SDL_RenderPresent(machine->renderer);
+}
+
+void drawTile(phoenixArcadeMachine* machine, byte x, byte y, u32*** characterArr, u16 memoryPos, u16 characterOffset)
+{
+	byte i = 0, j = 0;
+
+	for (i = 0; i < 8; ++i)
+	{
+		for (j = 0; j < 8; ++j)
+		{
+			u32 color = characterArr[characterOffset + machine->i8085->memory[memoryPos]][i][j];
+
+			if (color == 0xFF000000)
+			{
+				continue;
+			}
+			SDL_SetRenderDrawColor(machine->renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF);
+			SDL_RenderDrawPoint(machine->renderer, x + i, y + j);
+		}
+	}
 }
 
 void initMachine(phoenixArcadeMachine* machine)
@@ -420,29 +415,23 @@ void freeMachine(phoenixArcadeMachine* machine)
 void wb(void* data, unsigned short addr, byte value)
 {
 	phoenixArcadeMachine* machine = (phoenixArcadeMachine*)data;
-	if (addr < 0x4000)
+
+	// 0x0000 - 0x3FFF ROM
+	if (addr < 0x4000) 
 	{
 		return;
 	}
-	else if (((addr >= 0x4000 && addr <= 0x43FF) || (addr >= 0x4800 && addr <= 0x4BFF)) && (machine->videoControl & 0x1) == 1)
-	{
-		machine->i8085->memory[addr + 0x400] = value;
-		return;
-	}
-	else if (addr >= 0x4000 && addr < 0x8000)
+	if ((addr >= 0x4000 && addr <= 0x43FF) || (addr >= 0x4800 && addr <= 0x4BFF)) // 0x4000 - 0x43FF FG characters, 0x4800 - 0x4BFF BG characters
 	{
 		machine->i8085->memory[addr] = value;
-		return;
 	}
 	else if (addr >= 0x5000 && addr <= 0x53FF)
 	{
 		machine->videoControl = value;
-		return;
-	}
+	}	
 	else if (addr >= 0x5800 && addr <= 0x5BFF)
 	{
 		machine->scrollReg = value;
-		return;
 	}
 	else if (addr >= 0x6000 && addr <= 0x63FF)
 	{
@@ -452,6 +441,7 @@ void wb(void* data, unsigned short addr, byte value)
 	{
 		printf("Wrote to data: %x\n", value);
 	}
+	machine->i8085->memory[addr] = value;
 }
 
 byte rb(void* data, unsigned short addr)
@@ -466,13 +456,9 @@ byte rb(void* data, unsigned short addr)
 	{
 		return machine->inPort;
 	}
-	else if (addr >= 0x5000 && addr <= 0x53FF)
+	else if ((addr >= 0x4000 && addr <= 0x43FF) || (addr >= 0x4800 && addr <= 0x4BFF))
 	{
-		return machine->videoControl;
-	}
-	else if (((addr >= 0x4000 && addr <= 0x43FF) || (addr >= 0x4800 && addr <= 0x4BFF)) && (machine->videoControl & 0x1) == 1)
-	{
-		return machine->i8085->memory[addr + 0x400];
+		return machine->i8085->memory[addr];
 	}
 	else if (addr >= 0x7800 && addr <= 0x7BFF)
 	{
