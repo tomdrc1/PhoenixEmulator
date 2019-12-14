@@ -126,13 +126,10 @@ void machineUpdate(phoenixArcadeMachine* machine)
 		emulate8085Op(machine->i8085);
 		cyclesCount += machine->i8085->cycles - currentCycles;
 
-
-		
 		if (machine->i8085->cycles >= CYCLES_TO_VBLANK)
 		{
 			machine->i8085->cycles -= CYCLES_TO_VBLANK;
 			machine->dswSwitch = 1;
-			//draw(machine);
 		}
 	}
 }
@@ -141,10 +138,8 @@ void draw(phoenixArcadeMachine* machine)
 {
 	SDL_SetRenderDrawColor(machine->renderer, 0, 0, 0, 0);
 	SDL_RenderClear(machine->renderer);
-	SDL_SetRenderDrawColor(machine->renderer, 255, 255, 255, 255);
 
 	byte paletteControl = (machine->videoControl & 0x02) >> 1;
-	
 	u32*** characterArr = machine->characters[paletteControl];
 	
 	byte y = 0, x = 0;
@@ -435,11 +430,11 @@ void wb(void* data, unsigned short addr, byte value)
 	}
 	else if (addr >= 0x6000 && addr <= 0x63FF)
 	{
-		printf("Wrote to data: %x\n", value);
+		//printf("Wrote to data: %d\n", value);
 	}
 	else if (addr >= 0x6800 && addr <= 0x6BFF)
 	{
-		printf("Wrote to data: %x\n", value);
+		//printf("Wrote to data: %d\n", value);
 	}
 	machine->i8085->memory[addr] = value;
 }
