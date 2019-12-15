@@ -416,10 +416,6 @@ void wb(void* data, unsigned short addr, byte value)
 	{
 		return;
 	}
-	if ((addr >= 0x4000 && addr <= 0x43FF) || (addr >= 0x4800 && addr <= 0x4BFF)) // 0x4000 - 0x43FF FG characters, 0x4800 - 0x4BFF BG characters
-	{
-		machine->i8085->memory[addr] = value;
-	}
 	else if (addr >= 0x5000 && addr <= 0x53FF)
 	{
 		machine->videoControl = value;
