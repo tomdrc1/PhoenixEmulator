@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <SDL2/SDL.h>
+#include <wiringPi.h>
+
 #include "i8085.h"
 #include "rom.h"
 
@@ -21,6 +23,14 @@
 
 #define SCREEN_HEIGHT 208
 #define SCREEN_WIDTH 256
+
+#define PLAYER_SHOT_PIN 15
+#define PLAYER_SHIELD_PIN 6
+#define PLAYER_LEFT_PIN 4
+#define PLAYER_RIGHT_PIN 3
+#define START_2PLAYER_PIN 5
+#define PLAYER_START_PIN 12
+#define COIN_INSERT_PIN 13
 
 typedef unsigned int u32;
 typedef unsigned short u16;
@@ -88,6 +98,11 @@ void initMachine(phoenixArcadeMachine* machine);
 	input: A pointer to the i8085 struct
 */
 void initCPU(i8085* i8085);
+
+/*
+	 Will initiate the pins for the raspberry pi
+*/ 
+void initPiPins();
 
 /*
 	Will generate the palette from the palette roms

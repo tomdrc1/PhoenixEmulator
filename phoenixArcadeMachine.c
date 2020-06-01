@@ -5,7 +5,8 @@ void startEmulation(phoenixArcadeMachine* machine)
 	byte exit = 0;
 
 	initMachine(machine);
-	
+	initPiPins();
+
 	readFileToMemory(machine->i8085->memory, "Game/ic45", 0x0000);
 	readFileToMemory(machine->i8085->memory, "Game/ic46", 0x0800);
 	readFileToMemory(machine->i8085->memory, "Game/ic47", 0x1000);
@@ -31,69 +32,80 @@ void startEmulation(phoenixArcadeMachine* machine)
 
 	while (!exit)
 	{
+		if (digitalRead(PLAYER_SHOT_PIN) == 1)
+		{
+			machine->inPort &= ~(1 << 4); // Fire
+		}
+
+		if (digitalRead(PLAYER_SHIELD_PIN) == 1)
+		{
+			machine->inPort &= ~(1 << 7); // Shield
+		}
+
+		if (digitalRead(PLAYER_LEFT_PIN) == 1)
+		{
+			machine->inPort &= ~(1 << 6); // Move left
+		}
+		
+		if (digitalRead(PLAYER_RIGHT_PIN) == 1)
+		{
+			machine->inPort &= ~(1 << 5); // Move right
+		}
+
+		if (digitalRead(START_2PLAYER_PIN) == 1)
+		{
+			machine->inPort &= ~(1 << 2); // Start 2 player
+		}
+
+		if (digitalRead(PLAYER_START_PIN) == 1)
+		{
+			machine->inPort &= ~(1 << 1); // Start 1 player
+		}
+
+		if (digitalRead(COIN_INSERT_PIN) == 0)
+		{
+			machine->inPort &= ~(1 << 0); // Coin (0 When active IRL)
+		}
+
+		if (digitalRead(PLAYER_SHOT_PIN) == 0)
+		{
+			machine->inPort |= (1 << 4); // Fire
+		}
+
+		if (digitalRead(PLAYER_SHIELD_PIN) == 0)
+		{
+			machine->inPort |= (1 << 7); // Shield
+		}
+
+		if (digitalRead(PLAYER_LEFT_PIN) == 0)
+		{
+			machine->inPort |= (1 << 6); // Move left
+		}
+		
+		if (digitalRead(PLAYER_RIGHT_PIN) == 0)
+		{
+			machine->inPort |= (1 << 5); // Move right
+		}
+
+		if (digitalRead(START_2PLAYER_PIN) == 0)
+		{
+			machine->inPort |= (1 << 2); // Start 2 player
+		}
+
+		if (digitalRead(PLAYER_START_PIN) == 0)
+		{
+			machine->inPort |= (1 << 1); // Start 1 player
+		}
+
+		if (digitalRead(COIN_INSERT_PIN) == 1)
+		{
+			machine->inPort |= (1 << 0); // Coin (0 When active IRL)
+		}
 		if (SDL_PollEvent(&machine->sdlEvent) != 0)
 		{
 			if (machine->sdlEvent.type == SDL_QUIT)
 			{
 				exit = 1;
-			}
-
-			else if (machine->sdlEvent.type == SDL_KEYDOWN)
-			{
-				const unsigned int key = machine->sdlEvent.key.keysym.scancode;
-				switch (key)
-				{
-					case SDL_SCANCODE_C:
-						machine->inPort &= ~(1 << 0); // Coin
-						break;
-					case SDL_SCANCODE_RETURN:
-						machine->inPort &= ~(1 << 1); // Start 1 player
-						break;
-					case SDL_SCANCODE_2:
-						machine->inPort &= ~(1 << 2); // Start 2 player
-						break;
-					case SDL_SCANCODE_SPACE:
-						machine->inPort &= ~(1 << 4); // Fire
-						break;
-					case SDL_SCANCODE_RIGHT:
-						machine->inPort &= ~(1 << 5); // Player move right
-						break;
-					case SDL_SCANCODE_LEFT:
-						machine->inPort &= ~(1 << 6); // Player move left
-						break;
-					case SDL_SCANCODE_X:
-						machine->inPort &= ~(1 << 7); // Shield
-						break;
-				}
-			}
-
-			else if (machine->sdlEvent.type == SDL_KEYUP)
-			{
-				const unsigned int key = machine->sdlEvent.key.keysym.scancode;
-				switch (key)
-				{
-				case SDL_SCANCODE_C:
-					machine->inPort |= (1 << 0); // Coin
-					break;
-				case SDL_SCANCODE_RETURN:
-					machine->inPort |= (1 << 1); // Start 1 player
-					break;
-				case SDL_SCANCODE_2:
-					machine->inPort |= (1 << 2); // Start 2 player
-					break;
-				case SDL_SCANCODE_SPACE:
-					machine->inPort |= (1 << 4); // Fire
-					break;
-				case SDL_SCANCODE_RIGHT:
-					machine->inPort |= (1 << 5); // Player move right
-					break;
-				case SDL_SCANCODE_LEFT:
-					machine->inPort |= (1 << 6); // Player move left
-					break;
-				case SDL_SCANCODE_X:
-					machine->inPort |= (1 << 7); // Shield
-					break;
-				}
 			}
 			else if (machine->sdlEvent.type == SDL_WINDOWEVENT && machine->sdlEvent.window.event == SDL_WINDOWEVENT_RESIZED)
 			{
@@ -281,6 +293,18 @@ void initCPU(i8085* i8085)
 
 	i8085->int_enable = 0;
 	i8085->cycles = 0;
+}
+
+void initPiPins()
+{
+	wiringPiSetup();
+	pinMode(PLAYER_SHOT_PIN, INPUT);
+	pinMode(PLAYER_SHIELD_PIN, INPUT);
+	pinMode(PLAYER_LEFT_PIN, INPUT);
+	pinMode(PLAYER_RIGHT_PIN, INPUT);
+	pinMode(START_2PLAYER_PIN, INPUT);
+	pinMode(PLAYER_START_PIN, INPUT);
+	pinMode(COIN_INSERT_PIN, INPUT);
 }
 
 void makePalette(phoenixArcadeMachine* machine)
