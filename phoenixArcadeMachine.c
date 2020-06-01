@@ -3,6 +3,7 @@
 void startEmulation(phoenixArcadeMachine* machine)
 {
 	byte exit = 0;
+	byte isFullScreen = 0;
 
 	initMachine(machine);
 	initPiPins();
@@ -110,6 +111,23 @@ void startEmulation(phoenixArcadeMachine* machine)
 			else if (machine->sdlEvent.type == SDL_WINDOWEVENT && machine->sdlEvent.window.event == SDL_WINDOWEVENT_RESIZED)
 			{
 				SDL_RenderSetScale(machine->renderer, (float)machine->sdlEvent.window.data1 / SCREEN_HEIGHT, (float)machine->sdlEvent.window.data2 / SCREEN_WIDTH);
+			}
+			else if (machine->sdlEvent.type == SDL_KEYDOWN)
+			{
+				const unsigned int key = machine->sdlEvent.key.keysym.scancode;
+				if (key == SDL_SCANCODE_F)
+				{
+					if (!isFullScreen)
+					{
+						SDL_SetWindowFullscreen(machine->screen, SDL_WINDOW_FULLSCREEN_DESKTOP);
+						isFullScreen = 1;
+					}
+					else
+					{
+						SDL_SetWindowFullscreen(machine->screen, 0);
+						isFullScreen = 0;
+					}
+				}
 			}
 		}
 
