@@ -430,7 +430,7 @@ void wb(void* data, unsigned short addr, byte value)
 	}
 	else if (addr >= 0x6800 && addr <= 0x6BFF)
 	{
-		//printf("Wrote to data: %d\n", value);
+		printf("Data: %x, Freq: %x, Filt: %x, full value: %x\n", value & 0x0f, value & 0x10, value & 0x20, value);
 	}
 	machine->i8085->memory[addr] = value;
 }
